@@ -2,23 +2,15 @@ import React, { createContext, useContext, useState } from "react";
 
 const TreeContext = createContext(null);
 
-const INITIAL_TREES = [
-  { id: "OL-001", status: "healthy", soilMoisture: 38, addedAt: "01/01/2025" },
-  { id: "OL-002", status: "waterStress", soilMoisture: 19, addedAt: "01/01/2025" },
-  { id: "OL-003", status: "disease", soilMoisture: 30, addedAt: "01/01/2025" },
-  { id: "OL-004", status: "healthy", soilMoisture: 41, addedAt: "01/01/2025" },
-  { id: "OL-005", status: "healthy", soilMoisture: 35, addedAt: "01/01/2025" },
-];
-
 export function TreeProvider({ children }) {
-  const [trees, setTrees] = useState(INITIAL_TREES);
+  const [trees, setTrees] = useState([]);
 
   const addTree = (tree) => {
     setTrees((prev) => [{ ...tree, soilMoisture: tree.soilMoisture ?? 0 }, ...prev]);
   };
 
   return (
-    <TreeContext.Provider value={{ trees, addTree }}>
+    <TreeContext.Provider value={{ trees, setTrees, addTree }}>
       {children}
     </TreeContext.Provider>
   );

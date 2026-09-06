@@ -1,47 +1,71 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Switch, ActivityIndicator } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRoute } from "@react-navigation/native";
 import { socket } from "../services/socket";
 import { colors, radius, spacing } from "../../theme";
+import { setIrrigation as sendIrrigationCommand } from "../services/api";
 
 export default function IrrigationScreen() {
-  const [irrigation, setIrrigation] = useState(false);
+  const route = useRoute();
+  const { tree } = route.params || {};
+
+  const [irrigation, setIrrigationState] = useState(tree?.irrigationActive || false);
   const [connected, setConnected] = useState(false);
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
     const handleConnect = () => setConnected(true);
     const handleDisconnect = () => setConnected(false);
-    const handleUpdate = (newData) => {
-      if (newData.irrigation !== undefined) {
-        setIrrigation(newData.irrigation);
+
+    const handleEtatIrrigation = (payload) => {
+      if (payload.nodeId === tree?.nodeId) {
+        setIrrigationState(payload.irrigation);
         setPending(false);
       }
     };
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
-    socket.on("update", handleUpdate);
+    socket.on("etat_irrigation", handleEtatIrrigation);
     if (socket.connected) setConnected(true);
 
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
-      socket.off("update", handleUpdate);
+      socket.off("etat_irrigation", handleEtatIrrigation);
     };
-  }, []);
+  }, [tree]);
 
-  const toggleIrrigation = (value) => {
-    if (!connected) return;
+  const toggleIrrigation = async (value) => {
+    if (!connected || !tree?.nodeId) return;
+
     setPending(true);
-    setIrrigation(value);
-    socket.emit("irrigation_control", { irrigation: value });
+    setIrrigationState(value); // optimiste
+
+    try {
+      await sendIrrigationCommand(tree.nodeId, value ? "on" : "off", 15);
+      // handleEtatIrrigation confirmera via socket
+    } catch (err) {
+      console.log("Erreur commande irrigation:", err);
+      setIrrigationState(!value); // rollback si échec réseau
+    } finally {
+      setPending(false);
+    }
   };
+
+  if (!tree) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.warningText}>Aucun olivier sélectionné.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Irrigation</Text>
-      <Text style={styles.subtitle}>Contrôle du système d'arrosage</Text>
+      <Text style={styles.subtitle}>Contrôle du système d'arrosage — {tree.id}</Text>
 
       <View style={styles.card}>
         <View style={[styles.iconCircle, { backgroundColor: irrigation ? `${colors.info}22` : colors.surfaceAlt }]}>

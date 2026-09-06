@@ -48,9 +48,18 @@ export default function TreeDetailsScreen() {
       </View>
 
       <Text style={styles.sectionTitle}>ACTIONS</Text>
+
       <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate("AIResult", { tree })}>
         <MaterialCommunityIcons name="brain" size={19} color={colors.background} />
         <Text style={styles.actionButtonText}>Voir l'analyse IA</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.actionButton, { backgroundColor: colors.info, marginTop: 10 }]}
+        onPress={() => navigation.navigate("Irrigation", { tree })}
+      >
+        <MaterialCommunityIcons name="water-pump" size={19} color={colors.background} />
+        <Text style={styles.actionButtonText}>Gérer l'irrigation</Text>
       </TouchableOpacity>
     </ScrollView>
   );

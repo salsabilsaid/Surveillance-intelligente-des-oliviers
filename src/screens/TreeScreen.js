@@ -1,14 +1,20 @@
-
+import React, { useEffect } from "react";
 import { FlatList, Text, View, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import TreeCard from "../components/TreeCard";
 import { colors, spacing } from "../../theme";
 import { useTrees } from "../context/TreeContext";
+import { getTrees } from "../services/api";
 
 export default function TreeScreen() {
   const navigation = useNavigation();
+  const { trees, setTrees } = useTrees();
 
-  const { trees } = useTrees();
+  useEffect(() => {
+    getTrees()
+      .then((res) => setTrees(res.data))
+      .catch((err) => console.log("Erreur getTrees:", err));
+  }, []);
 
   return (
     <FlatList
